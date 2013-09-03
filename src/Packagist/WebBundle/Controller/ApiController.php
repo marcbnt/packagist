@@ -118,6 +118,25 @@ class ApiController extends Controller
     }
 
     /**
+     * @Route("/api/gitlab", name="gitlab_postreceive", defaults={"_format" = "json"})
+     * @Method({"POST"})
+     */
+    public function gitlabPostReceive(Request $request)
+    {
+        // decode GitLab's POST payload
+        $payload = json_decode($request->getContent(), true);
+
+        if (!$payload || !isset($payload['repository']['url'])) {
+            return new Response(json_encode(array('status' => 'error', 'message' => 'Missing or invalid payload',)), 406);
+        }
+
+        $urlRegex = '{^(?:https?://|git://|git@)?(?P<host>.*)[/:](?P<path>[\w.-]+/[\w.-]+?)(\.git)?/?$}';
+        $repoUrl = $payload['repository']['url'];
+
+        return $this->receivePost($request, $repoUrl, $urlRegex);
+    }
+
+    /**
      * @Route("/downloads/{name}", name="track_download", requirements={"name"="[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+"}, defaults={"_format" = "json"})
      * @Method({"POST"})
      */
